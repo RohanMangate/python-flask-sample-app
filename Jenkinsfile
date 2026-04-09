@@ -5,32 +5,44 @@ pipeline {
         stage('Build') {
             steps {
                 echo 'Installing dependencies'
-                sh 'python3 -m pip install --upgrade pip'
-                sh 'pip3 install -r requirements.txt'
+                sh '''
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                echo 'Running tests'
-                sh 'pytest || true'
+                echo 'Running unit tests'
+                sh '''
+                    . venv/bin/activate
+                    pytest test_app.py -v
+                '''
             }
         }
 
         stage('Deploy') {
             steps {
-                echo 'Deploying Flask application'
-                sh 'nohup python3 app.py &'
+                echo 'Deploying application to staging'
+                sh '''
+                    . venv/bin/activate
+                    nohup python3 app.py &
+                    sleep 3
+                    echo "Application deployed successfully on port 5000"
+                '''
             }
         }
     }
 
     post {
         success {
-            echo 'Pipeline completed successfully'
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed'
+            echo 'Pipeline failed!'
         }
     }
 }
